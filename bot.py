@@ -1,3 +1,4 @@
+# import libraries
 from requests_oauthlib import OAuth1Session
 import os
 import json
@@ -9,19 +10,9 @@ import streamlit as st
 from dotenv import load_dotenv
 import time
 import threading
-import pickle  # For persistent storage
 
-# Load environment variables from .env file
+# Load environment variables
 load_dotenv()
-
-# Check if environment variables are loaded correctly
-consumer_key = os.getenv("CONSUMER_KEY")
-consumer_secret = os.getenv("CONSUMER_SECRET")
-google_ai_key = os.getenv("GOOGLE_AI_KEY")
-
-if not consumer_key or not consumer_secret or not google_ai_key:
-    st.error("One or more environment variables are missing. Please check your .env file.")
-    st.stop()
 
 # Streamlit page configuration
 st.set_page_config(
@@ -32,43 +23,32 @@ st.set_page_config(
 # Title
 st.title("Twitter Bot Control Page")
 
-# Path to store OAuth tokens persistently
-token_file_path = "twitter_oauth_tokens.pkl"
+# Persistent storage for OAuth tokens
+token_file_path = "twitter_oauth_tokens.json"
 
-# Function to save tokens to a file
-def save_tokens(tokens):
-    with open(token_file_path, 'wb') as f:
-        pickle.dump(tokens, f)
-
-# Function to load tokens from a file
+# Function to load tokens from file
 def load_tokens():
     if os.path.exists(token_file_path):
-        with open(token_file_path, 'rb') as f:
-            return pickle.load(f)
+        with open(token_file_path, 'r') as f:
+            return json.load(f)
     return None
 
-# Load tokens if they exist
-oauth_tokens = load_tokens()
-
-if oauth_tokens:
-    st.session_state.oauth_tokens = oauth_tokens
-
+# Load OAuth tokens if available
 if "oauth_tokens" not in st.session_state:
-    st.session_state.oauth_tokens = None
+    st.session_state.oauth_tokens = load_tokens()
 
-# Get request token
+# OAuth configuration
+consumer_key = os.getenv("CONSUMER_KEY")
+consumer_secret = os.getenv("CONSUMER_SECRET")
 request_token_url = "https://api.twitter.com/oauth/request_token?oauth_callback=oob&x_auth_access_type=write"
 oauth = OAuth1Session(consumer_key, client_secret=consumer_secret)
 
+# Retrieve OAuth tokens if not available in session state
 if st.session_state.oauth_tokens is None:
-    try:
-        fetch_response = oauth.fetch_request_token(request_token_url)
-        st.session_state.oauth_tokens = fetch_response
-        save_tokens(fetch_response)  # Save tokens persistently
-    except Exception as e:
-        st.error(f"Error fetching request token: {e}")
-        st.stop()
+    fetch_response = oauth.fetch_request_token(request_token_url)
+    st.session_state.oauth_tokens = fetch_response
 
+# Extract OAuth tokens
 resource_owner_key = st.session_state.oauth_tokens.get("oauth_token")
 resource_owner_secret = st.session_state.oauth_tokens.get("oauth_token_secret")
 
@@ -87,35 +67,35 @@ auth_url_placeholder.write(authorization_url)
 # Input PIN
 pin = pin_input_placeholder.text_input("Enter the PIN provided by Twitter:", "")
 
+# Handle PIN input
 if pin:
-    try:
-        # Get access token
-        access_token_url = "https://api.twitter.com/oauth/access_token"
-        oauth = OAuth1Session(
-            consumer_key,
-            client_secret=consumer_secret,
-            resource_owner_key=resource_owner_key,
-            resource_owner_secret=resource_owner_secret,
-            verifier=pin,
-        )
-        oauth_tokens = oauth.fetch_access_token(access_token_url)
-        st.session_state.oauth_tokens = oauth_tokens
-        save_tokens(oauth_tokens)  # Save tokens persistently
+    # Get access token
+    access_token_url = "https://api.twitter.com/oauth/access_token"
+    oauth = OAuth1Session(
+        consumer_key,
+        client_secret=consumer_secret,
+        resource_owner_key=resource_owner_key,
+        resource_owner_secret=resource_owner_secret,
+        verifier=pin,
+    )
+    oauth_tokens = oauth.fetch_access_token(access_token_url)
 
-        # Clear placeholders
-        auth_url_placeholder.empty()
-        pin_input_placeholder.empty()
+    # Save OAuth tokens to session state and file
+    st.session_state.oauth_tokens = oauth_tokens
+    with open(token_file_path, 'w') as f:
+        json.dump(oauth_tokens, f)
 
-        # Inform user about successful authentication
-        st.write("Authentication successful!")
-        st.write("You can now use the Twitter API.")
-    except Exception as e:
-        st.error(f"Error fetching access token: {e}")
-        st.stop()
+    # Clear placeholders
+    auth_url_placeholder.empty()
+    pin_input_placeholder.empty()
+
+    # Inform user about successful authentication
+    st.write("Authentication successful!")
+    st.write("You can now use the Twitter API.")
 
 # Gemini authentication
-genai.configure(api_key=google_ai_key)
-model = genai.GenerativeModel('gemini-1.5-pro-latest')
+genai.configure(api_key=os.getenv('GOOGLE_AI_KEY'))
+model = genai.GenerativeModel('gemini-pro')
 
 # Theme selection function
 def theme_selection():
