@@ -207,23 +207,40 @@ def create_and_publish_tweet(theme, emotion):
 
     return response_code, response_print
 
+# Function to generate and display the initial tweet
+def display_initial_tweet():
+    theme = theme_selection()
+    response_code, response_print = create_and_publish_tweet(theme)
+    current_time = datetime.now()
+    formatted_time = current_time.strftime("%d-%m-%Y %H:%M:%S")
+    parsed_data = json.loads(response_print)
+    tweet = parsed_data['data']['text']
+    st.write("---")
+    st.write(f"Time posted: {formatted_time}")
+    st.write(f"Tweet posted: {tweet}")
+    st.write("---")  # Adding a separator for readability
+
+# Call the function to display the initial tweet
+display_initial_tweet()
+
 # Function to run periodically every hour
 def run_periodically():
     while True:
         # Call your functions here
-        theme, emotion = theme_selection()
-        response_code, response_print = create_and_publish_tweet(theme, emotion)
+        theme = theme_selection()
+        response_code, response_print = create_and_publish_tweet(theme)
 
-        # Saving tweets in a dataframe
+        #Saving tweets in the DataFrame
         current_time = datetime.now()
-        formated_time = current_time.strftime("%d-%m-%Y %H:%M:%S")
+        formatted_time = current_time.strftime("%d-%m-%Y %H:%M:%S")
         parsed_data = json.loads(response_print)
         tweet = parsed_data['data']['text']
 
-        st.write(f"Time posted: {formated_time}")
-        st.write(f"Tweet: {tweet}")
-        st.write(f"Status code: {response_code}")
-        
+        # Display the tweet and its timestamp in the Streamlit app
+        st.write(f"Time posted: {formatted_time}")
+        st.write(f"Tweet posted: {tweet}")
+        st.write("---")  # Adding a separator for readability
+
         # Sleep for 1 hour
         time.sleep(3600)
 
