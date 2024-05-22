@@ -209,8 +209,8 @@ def create_and_publish_tweet(theme, emotion):
 
 # Function to generate and display the initial tweet
 def display_initial_tweet():
-    theme = theme_selection()
-    response_code, response_print = create_and_publish_tweet(theme)
+    theme, emotion = theme_selection()
+    response_code, response_print = create_and_publish_tweet(theme, emotion)
     current_time = datetime.now()
     formatted_time = current_time.strftime("%d-%m-%Y %H:%M:%S")
     parsed_data = json.loads(response_print)
@@ -227,8 +227,8 @@ display_initial_tweet()
 def run_periodically():
     while True:
         # Call your functions here
-        theme = theme_selection()
-        response_code, response_print = create_and_publish_tweet(theme)
+        theme, emotion = theme_selection()
+        response_code, response_print = create_and_publish_tweet(theme, emotion)
 
         #Saving tweets in the DataFrame
         current_time = datetime.now()
