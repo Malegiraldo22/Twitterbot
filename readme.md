@@ -16,11 +16,27 @@ This Python application utilizes artificial intelligence (AI) to generate tweets
 
 ## Dependencies
 
-- Streamlit: A Python library for building interactive web applications.
-- Gemini 1.0 Pro: Google's artificial intelligence.
-- Requests-OAuthlib: A library for OAuth 1.0a authentication with various web services, including Twitter.
-- Pandas: A powerful data manipulation library for Python.
-- Dotenv: A Python library for parsing .env files to load environment variables.
+The following dependencies are required for this project:
+
+- `requests_oauthlib`: For handling OAuth authentication with the Twitter API.
+- `os`: For accessing environment variables.
+- `json`: For handling JSON data.
+- `google.generativeai`: For using Gemini API.
+- `random`: For selecting random themes and emotions.
+- `datetime`: For handling date and time.
+- `pandas`: For managing data.
+- `streamlit`: For creating a user interface.
+- `dotenv`: For loading environment variables from a `.env` file.
+- `time`: For handling sleep intervals.
+- `threading`: For running periodic tasks in a separate thread.
+
+### Core Functions
+
+- **Environment Setup**: Load environment variables from `.env` file.
+- **OAuth Authentication**: Handle the Twitter OAuth process.
+- **Theme Selection**: Randomly select a theme and emotion for tweet generation.
+- **Tweet Creation and Posting**: Generate a tweet using Generative AI and post it to Twitter.
+- **Periodic Execution**: Run the tweet creation and posting process every hour.
 
 ## Setup
 
