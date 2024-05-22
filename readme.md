@@ -1,6 +1,6 @@
-# Twitter Bot with AI-generated Tweets
+# Twitter Bot
 
-This Python application utilizes artificial intelligence (AI) to generate tweets on various topics and publishes them on Twitter using the Twitter API. It is built with Streamlit for the user interface, Google's Gemini for language generation, and the Twitter API for tweet publishing.
+This project is a Twitter bot built using Python. It generates and posts tweets automatically every hour using the Twitter API and Google's Generative AI (Gemini).
 
 ## How It Works
 
@@ -11,6 +11,8 @@ This Python application utilizes artificial intelligence (AI) to generate tweets
 3. **Tweet Publishing**: After generating a tweet, the application uses the Twitter API to publish the tweet on a Twitter account. Users must authenticate with Twitter to authorize the application to access their account and publish tweets.
 
 4. **Real-time Display**: The generated tweets are displayed in real-time using Streamlit, allowing users to see the tweets as they are generated. The Streamlit app provides a user-friendly interface for interacting with the application.
+
+5. **Persistent Storage**: OAuth tokens are stored persistently to avoid re-authentication across sessions.
 
 **Note**: Tweets are generated every hour, providing a continuous stream of content on the selected topics.
 
@@ -29,6 +31,7 @@ The following dependencies are required for this project:
 - `dotenv`: For loading environment variables from a `.env` file.
 - `time`: For handling sleep intervals.
 - `threading`: For running periodic tasks in a separate thread.
+- `pickle`: For persistent storage
 
 ### Core Functions
 

@@ -1,17 +1,27 @@
-# import libraries
 from requests_oauthlib import OAuth1Session
 import os
 import json
 import google.generativeai as genai
 import random
 from datetime import datetime
+import pandas as pd
 import streamlit as st
 from dotenv import load_dotenv
 import time
 import threading
+import pickle  # For persistent storage
 
-#load env
+# Load environment variables from .env file
 load_dotenv()
+
+# Check if environment variables are loaded correctly
+consumer_key = os.getenv("CONSUMER_KEY")
+consumer_secret = os.getenv("CONSUMER_SECRET")
+google_ai_key = os.getenv("GOOGLE_AI_KEY")
+
+if not consumer_key or not consumer_secret or not google_ai_key:
+    st.error("One or more environment variables are missing. Please check your .env file.")
+    st.stop()
 
 # Streamlit page configuration
 st.set_page_config(
@@ -22,18 +32,42 @@ st.set_page_config(
 # Title
 st.title("Twitter Bot Control Page")
 
+# Path to store OAuth tokens persistently
+token_file_path = "twitter_oauth_tokens.pkl"
+
+# Function to save tokens to a file
+def save_tokens(tokens):
+    with open(token_file_path, 'wb') as f:
+        pickle.dump(tokens, f)
+
+# Function to load tokens from a file
+def load_tokens():
+    if os.path.exists(token_file_path):
+        with open(token_file_path, 'rb') as f:
+            return pickle.load(f)
+    return None
+
+# Load tokens if they exist
+oauth_tokens = load_tokens()
+
+if oauth_tokens:
+    st.session_state.oauth_tokens = oauth_tokens
+
 if "oauth_tokens" not in st.session_state:
-        st.session_state.oauth_tokens = None
-    
-consumer_key = os.getenv("CONSUMER_KEY")
-consumer_secret = os.getenv("CONSUMER_SECRET")
+    st.session_state.oauth_tokens = None
+
 # Get request token
 request_token_url = "https://api.twitter.com/oauth/request_token?oauth_callback=oob&x_auth_access_type=write"
 oauth = OAuth1Session(consumer_key, client_secret=consumer_secret)
-    
+
 if st.session_state.oauth_tokens is None:
+    try:
         fetch_response = oauth.fetch_request_token(request_token_url)
         st.session_state.oauth_tokens = fetch_response
+        save_tokens(fetch_response)  # Save tokens persistently
+    except Exception as e:
+        st.error(f"Error fetching request token: {e}")
+        st.stop()
 
 resource_owner_key = st.session_state.oauth_tokens.get("oauth_token")
 resource_owner_secret = st.session_state.oauth_tokens.get("oauth_token_secret")
@@ -41,19 +75,20 @@ resource_owner_secret = st.session_state.oauth_tokens.get("oauth_token_secret")
 # Authorization URL
 base_authorization_url = "https://api.twitter.com/oauth/authorize"
 authorization_url = oauth.authorization_url(base_authorization_url)
-    
+
 # Create placeholders for authorization URL and PIN input
 auth_url_placeholder = st.empty()
 pin_input_placeholder = st.empty()
-    
+
 # Display authorization URL
 auth_url_placeholder.write("Please go to the following URL and authorize the app:")
 auth_url_placeholder.write(authorization_url)
-    
+
 # Input PIN
 pin = pin_input_placeholder.text_input("Enter the PIN provided by Twitter:", "")
 
 if pin:
+    try:
         # Get access token
         access_token_url = "https://api.twitter.com/oauth/access_token"
         oauth = OAuth1Session(
@@ -65,6 +100,7 @@ if pin:
         )
         oauth_tokens = oauth.fetch_access_token(access_token_url)
         st.session_state.oauth_tokens = oauth_tokens
+        save_tokens(oauth_tokens)  # Save tokens persistently
 
         # Clear placeholders
         auth_url_placeholder.empty()
@@ -73,19 +109,21 @@ if pin:
         # Inform user about successful authentication
         st.write("Authentication successful!")
         st.write("You can now use the Twitter API.")
-    
+    except Exception as e:
+        st.error(f"Error fetching access token: {e}")
+        st.stop()
 
-#Gemini authentication
-genai.configure(api_key=os.environ.get('GOOGLE_AI_KEY'))
-model = genai.GenerativeModel('gemini-pro')
+# Gemini authentication
+genai.configure(api_key=google_ai_key)
+model = genai.GenerativeModel('gemini-1.5-pro-latest')
 
-#Theme selection function
+# Theme selection function
 def theme_selection():
     """
-    Function that randomly chooses a topic and an optional emotion to generate a tweet.
+    Function that randomly chooses a topic from a list and an emotion
 
     Returns:
-        prompt (str): Prompt to be used in the AI prompt to generate a tweet.
+        Theme (str): Theme to be used in the AI prompt to generate a tweet
     """
     topics = [
         "Technology and Innovation",
@@ -121,38 +159,25 @@ def theme_selection():
     ]
 
     emotions = [
-        "joy",
-        "sadness",
-        "anger",
-        "fear",
-        "surprise",
-        "disgust",
-        "excitement",
-        "gratitude",
-        "love",
-        "hope",
-        "optimism",
-        "curiosity",
-        "confusion",
-        "amusement",
-        "contempt",
-        "awe",
-        "sarcasm"
+        "happy",
+        "sad",
+        "excited",
+        "angry",
+        "surprised",
+        "curious",
+        "inspired",
+        "nostalgic",
+        "motivated",
+        "amused"
     ]
 
-    theme = topics[random.randint(0, len(topics) - 1)]
-    prompt = f"Write a 280 character tweet including 4 hashtags about {theme}"
+    theme = random.choice(topics)
+    emotion = random.choice(emotions)
+    return theme, emotion
 
-    # Randomly select an emotion and incorporate it into the prompt
-    if random.random() < 0.5:  # 50% chance of including an emotion
-        emotion = emotions[random.randint(0, len(emotions) - 1)]
-        prompt += f" expressing {emotion}"
-
-    return prompt
-
-def create_and_publish_tweet(promt):
+def create_and_publish_tweet(theme, emotion):
     """
-    Function that creates a tweet from a list of themes using gemini-pro api and uses X api to publish it on X
+    Function that creates a tweet from a list of themes using gemini-pro API and uses Twitter API to publish it
 
     Raises:
         Exception: returns an error message with status code and error type
@@ -161,7 +186,7 @@ def create_and_publish_tweet(promt):
         response_code (int): Status code number
         response_print(json): json containing tweet info
     """
-    response = model.generate_content(promt)
+    response = model.generate_content(f'Write a 280 character tweet about {theme} with a {emotion} tone including 4 hashtags')
     payload = {"text": response.text}
     # Making the request
     response = oauth.post(
@@ -182,40 +207,23 @@ def create_and_publish_tweet(promt):
 
     return response_code, response_print
 
-# Function to generate and display the initial tweet
-def display_initial_tweet():
-    theme = theme_selection()
-    response_code, response_print = create_and_publish_tweet(theme)
-    current_time = datetime.now()
-    formatted_time = current_time.strftime("%d-%m-%Y %H:%M:%S")
-    parsed_data = json.loads(response_print)
-    tweet = parsed_data['data']['text']
-    st.write("---")
-    st.write(f"Time posted: {formatted_time}")
-    st.write(f"Tweet posted: {tweet}")
-    st.write("---")  # Adding a separator for readability
-
-# Call the function to display the initial tweet
-display_initial_tweet()
-
 # Function to run periodically every hour
 def run_periodically():
     while True:
         # Call your functions here
-        theme = theme_selection()
-        response_code, response_print = create_and_publish_tweet(theme)
+        theme, emotion = theme_selection()
+        response_code, response_print = create_and_publish_tweet(theme, emotion)
 
-        #Saving tweets in the DataFrame
+        # Saving tweets in a dataframe
         current_time = datetime.now()
-        formatted_time = current_time.strftime("%d-%m-%Y %H:%M:%S")
+        formated_time = current_time.strftime("%d-%m-%Y %H:%M:%S")
         parsed_data = json.loads(response_print)
         tweet = parsed_data['data']['text']
 
-        # Display the tweet and its timestamp in the Streamlit app
-        st.write(f"Time posted: {formatted_time}")
-        st.write(f"Tweet posted: {tweet}")
-        st.write("---")  # Adding a separator for readability
-
+        st.write(f"Time posted: {formated_time}")
+        st.write(f"Tweet: {tweet}")
+        st.write(f"Status code: {response_code}")
+        
         # Sleep for 1 hour
         time.sleep(3600)
 
