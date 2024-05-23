@@ -77,8 +77,8 @@ def create_and_publish_tweet(theme, emotion, max_retries=5):
             attempts += 1
             current_time = datetime.now()
             formatted_time = current_time.strftime("%d-%m-%Y %H:%M:%S")
-            st.write(f"{formatted_time}: An error occurred: {type(e).__name__} - {e}")
-            print(f"{formatted_time}: An error occurred: {type(e).__name__} - {e}")
+            st.write(f"{formatted_time}: An error occurred: {type(e).__name__} - {e}, traceback.format_exc()")
+            print(f"{formatted_time}: An error occurred: {type(e).__name__} - {e}, traceback.format_exc()")
             st.write("---")
             print("---")
             if attempts < max_retries:
