@@ -2,3 +2,6 @@ requests_oauthlib
 streamlit
 python-dotenv
 google-generativeai
+APScheduler
+tweepy
+pytz
