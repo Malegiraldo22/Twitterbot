@@ -74,7 +74,7 @@ def create_and_publish_tweet(theme, emotion, max_retries=5):
             tweet = response.text
             current_time = datetime.now()
             formatted_time = current_time.strftime("%d-%m-%Y %H:%M:%S")
-            client.create_tweet(text=tweet)
+            user.create_tweet(text=tweet)
             return tweet
         except Exception as e:
             attempts += 1
@@ -111,7 +111,7 @@ def display_initial_tweet():
         print("----")
 
 #Call authenticate function
-client = authenticate()
+user = authenticate()
 # Call the function to display the initial tweet
 display_initial_tweet()
 
