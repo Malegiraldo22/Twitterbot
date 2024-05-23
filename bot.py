@@ -33,7 +33,6 @@ def authenticate():
             access_token=os.getenv('ACCESS_TOKEN'),
             access_token_secret=os.getenv('ACCESS_SECRET')
         )
-        st.write("Client created")
     except Exception as e:
         current_time = datetime.now()
         formated_time = current_time.strftime("%d-%m-%Y %H:%M:%S")
@@ -148,7 +147,7 @@ def run_periodically():
 
 # Start a thread to run the periodic function
 scheduler = BackgroundScheduler(timezone='America/Bogota', daemon=True)
-scheduler.add_job(run_periodically, 'interval', minutes=5)
+scheduler.add_job(run_periodically, 'interval', minutes=60)
 scheduler.start()
 for job in scheduler.get_jobs():
     st.write("Next tweet will be sent at: ", job.next_run_time)
