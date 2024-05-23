@@ -32,6 +32,7 @@ try:
         access_token=os.getenv('ACCESS_TOKEN'),
         access_token_secret=os.getenv('ACCESS_SECRET')
     )
+    st.write("Client created")
 except Exception as e:
     current_time = datetime.now()
     formated_time = current_time.strftime("%d-%m-%Y %H:%M:%S")
