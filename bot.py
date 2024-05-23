@@ -38,7 +38,6 @@ def authenticate():
         current_time = datetime.now()
         formated_time = current_time.strftime("%d-%m-%Y %H:%M:%S")
         print("Error: ", formated_time, ": An error occurred, ", type(e).__name__, "-", e, traceback.format_exc())
-    return client
 
 # Gemini authentication
 genai.configure(api_key=os.getenv('GOOGLE_AI_KEY'))
