@@ -3,5 +3,5 @@ streamlit
 python-dotenv
 google-generativeai
 APScheduler
-tweepy
+tweepy==4.14.0
 pytz
