@@ -25,18 +25,20 @@ st.title("Twitter Bot Control Page")
 st.write("---")
 
 # Authenticating with Tweepy using a bearer token
-try:
-    client = tweepy.Client(
-        consumer_key=os.getenv('CONSUMER_KEY'),
-        consumer_secret=os.getenv('CONSUMER_SECRET'),
-        access_token=os.getenv('ACCESS_TOKEN'),
-        access_token_secret=os.getenv('ACCESS_SECRET')
-    )
-    st.write("Client created")
-except Exception as e:
-    current_time = datetime.now()
-    formated_time = current_time.strftime("%d-%m-%Y %H:%M:%S")
-    print("Error: ", formated_time, ": An error occurred, ", type(e).__name__, "-", e, traceback.format_exc())
+def authenticate():
+    try:
+        client = tweepy.Client(
+            consumer_key=os.getenv('CONSUMER_KEY'),
+            consumer_secret=os.getenv('CONSUMER_SECRET'),
+            access_token=os.getenv('ACCESS_TOKEN'),
+            access_token_secret=os.getenv('ACCESS_SECRET')
+        )
+        st.write("Client created")
+    except Exception as e:
+        current_time = datetime.now()
+        formated_time = current_time.strftime("%d-%m-%Y %H:%M:%S")
+        print("Error: ", formated_time, ": An error occurred, ", type(e).__name__, "-", e, traceback.format_exc())
+    return client
 
 # Gemini authentication
 genai.configure(api_key=os.getenv('GOOGLE_AI_KEY'))
@@ -108,6 +110,8 @@ def display_initial_tweet():
         print(f"{formated_time}: Tweet not posted due to errors")
         print("----")
 
+#Call authenticate function
+client = authenticate()
 # Call the function to display the initial tweet
 display_initial_tweet()
 
