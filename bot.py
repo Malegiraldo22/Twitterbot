@@ -283,7 +283,7 @@ def refresh_ui():
 def ui_schedule():
     # Set a scheduler to refresh the UI every minute to check for updates
     ui_scheduler = BackgroundScheduler(timezone='America/Bogota', daemon=True)
-    ui_scheduler.add_job(refresh_ui, 'interval', minutes=1)
+    ui_scheduler.add_job(refresh_ui, 'interval', minutes=60)
     ui_scheduler.start()
     for job in ui_scheduler.get_jobs():
         msg = str(job.next_run_time)
