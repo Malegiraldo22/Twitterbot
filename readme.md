@@ -24,7 +24,7 @@ This project is a Twitter bot that generates and posts tweets using the Gemini A
 ### Environment Variables
 Create a `.env` file in the root directory and add the following environment variables:
 
-    ```
+   ```sh
     CONSUMER_KEY=your_twitter_consumer_key
     CONSUMER_SECRET=your_twitter_consumer_secret
     ACCESS_TOKEN=your_twitter_access_token
@@ -32,7 +32,7 @@ Create a `.env` file in the root directory and add the following environment var
     GOOGLE_JSON=your_google_service_account_json
     GOOGLE_SHEET=your_google_sheet_url
     GOOGLE_AI_KEY=your_google_ai_key
-    ```
+   ```
 
 ### Installation Steps
 
