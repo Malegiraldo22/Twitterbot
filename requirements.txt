@@ -4,4 +4,7 @@ python-dotenv
 google-generativeai
 APScheduler
 tweepy==4.14.0
-pytz
+pandas
+google-auth
+google-auth-oauthlib
+gspread

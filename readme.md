@@ -1,86 +1,101 @@
-# Twitter Bot
+# Twitter Bot Control Page
 
-This project is a Twitter bot built using Python. It generates and posts tweets automatically every hour using the Twitter API and Google's Generative AI (Gemini).
+## Overview
+This project is a Twitter bot that generates and posts tweets using the Gemini API. The bot also logs tweets, errors, and tweets that exceed the character limit in a Google Sheets file. The user interface is built with Streamlit, though the project is considering moving to Flask due to UI update issues with the scheduler.
 
-## How It Works
+## Features
+- **Automated Tweet Generation**: Tweets are created using the Gemini API based on randomly selected themes and emotions.
+- **Tweet Posting**: Generated tweets are posted on Twitter using the Tweepy API.
+- **Error Handling**: Tweets that exceed 280 characters and errors are logged in a Google Sheets file.
+- **User Interface**: Built with Streamlit, displays logs, scheduled tweets, and error information. (Read the limitations section about this feaure)
+- **Periodic Updates**: A scheduler periodically generates and posts tweets, and updates the UI.
 
-1. **Theme Selection**: The `theme_selection` function randomly selects a topic from a predefined list of themes. Additionally, it may include an optional emotion to add depth and variety to the generated tweets.
+## Installation
 
-2. **Tweet Generation**: The `create_and_publish_tweet` function generates tweets based on the selected theme and optional emotion. It uses Google's Gemini 1.0 Pro language generation capabilities to create engaging and diverse content.
+### Prerequisites
+- Python 3.7+
+- Streamlit
+- Tweepy
+- Google API Client Library
+- APScheduler
+- Pandas
+- dotenv
 
-3. **Tweet Publishing**: After generating a tweet, the application uses the Twitter API to publish the tweet on a Twitter account. Users must authenticate with Twitter to authorize the application to access their account and publish tweets.
+### Environment Variables
+Create a `.env` file in the root directory and add the following environment variables:
 
-4. **Real-time Display**: The generated tweets are displayed in real-time using Streamlit, allowing users to see the tweets as they are generated. The Streamlit app provides a user-friendly interface for interacting with the application.
-
-5. **Persistent Storage**: OAuth tokens are stored persistently to avoid re-authentication across sessions.
-
-**Note**: Tweets are generated every hour, providing a continuous stream of content on the selected topics.
-
-## Dependencies
-
-The following dependencies are required for this project:
-
-- `requests_oauthlib`: For handling OAuth authentication with the Twitter API.
-- `os`: For accessing environment variables.
-- `json`: For handling JSON data.
-- `google.generativeai`: For using Gemini API.
-- `random`: For selecting random themes and emotions.
-- `datetime`: For handling date and time.
-- `pandas`: For managing data.
-- `streamlit`: For creating a user interface.
-- `dotenv`: For loading environment variables from a `.env` file.
-- `time`: For handling sleep intervals.
-- `threading`: For running periodic tasks in a separate thread.
-- `pickle`: For persistent storage
-
-### Core Functions
-
-- **Environment Setup**: Load environment variables from `.env` file.
-- **OAuth Authentication**: Handle the Twitter OAuth process.
-- **Theme Selection**: Randomly select a theme and emotion for tweet generation.
-- **Tweet Creation and Posting**: Generate a tweet using Generative AI and post it to Twitter.
-- **Periodic Execution**: Run the tweet creation and posting process every hour.
-
-## Setup
-
-1. Clone the repository:
-
-    ```bash
-    git clone https://github.com/your-username/twitter-bot.git
     ```
-
-2. Install the required dependencies:
-
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-3. Set up your Twitter API credentials and Google AI key by creating a `.env` file and adding the following:
-
-    ```plaintext
     CONSUMER_KEY=your_twitter_consumer_key
     CONSUMER_SECRET=your_twitter_consumer_secret
     ACCESS_TOKEN=your_twitter_access_token
     ACCESS_SECRET=your_twitter_access_secret
-    CLIENT_ID=your_twitter_client_id
-    CLIENT_SECRET=your_twitter_client_secret
-    GOOGLE_AI_KEY=your_google_gemini_ai_key
+    GOOGLE_JSON=your_google_service_account_json
+    GOOGLE_SHEET=your_google_sheet_url
+    GOOGLE_AI_KEY=your_google_ai_key
     ```
 
-4. Run the application:
+### Installation Steps
 
-    ```bash
-    streamlit run twitter_bot.py
+1. Clone the repository:
+    ```sh
+    git clone https://github.com/Malegiraldo22/twitterbot.git
+    cd twitterbot
     ```
 
-## Customization
+2. Install dependencies:
+    ```sh
+    pip install -r requirements.txt
+    ```
+
+3. Run the Streamlit app:
+    ```sh
+    streamlit run app.py
+    ```
+
+## Usage
+
+### Streamlit Interface
+- Open your web browser and go to the local address provided by Streamlit (usually `http://localhost:8501`).
+- The main page displays logs, generated tweets, long tweets, and errors.
+
+### Scheduler
+- Tweets are generated and posted every hour.
+- The UI updates every minute to reflect new data from Google Sheets.
+
+### Customization
 
 - You can customize the list of themes and emotions in the `theme_selection` function to tailor the generated tweets to your preferences or specific use case.
+
+## Code Explanation
+
+### Authentication
+- **Twitter Authentication**: Uses Tweepy to authenticate with the Twitter API.
+- **Google Sheets Authentication**: Uses `gspread` and `google-auth` to connect to Google Sheets.
+
+### Logging
+- Logs are displayed on the Streamlit interface (Read the limitations section to more about this) and stored in Google Sheets.
+
+### Functions
+- `theme_selection()`: Randomly selects a theme and emotion for tweet generation.
+- `log_to_sheet(sheet, message)`: Logs messages to a specified Google Sheet.
+- `create_and_publish_tweet(theme, emotion, max_retries=5)`: Generates and posts a tweet, handling errors and retries.
+- `check_sheet_updates()`: Fetches data from Google Sheets.
+- `run_periodically()`: Generates and posts tweets periodically.
+- `tweet_schedule()`: Schedules the `run_periodically` function to run every hour.
+- `refresh_ui()`: Refreshes the Streamlit UI to display updated data.
+- `ui_schedule()`: Schedules the `refresh_ui` function to run every minute.
 
 ## Limitations
 
 - The quality and coherence of the generated tweets may vary based on the complexity of the selected theme and the capabilities of the language model used.
 - The Twitter API has rate limits and other restrictions that may affect the frequency and volume of tweets that can be published.
+- Currently, the UI does not update properly when the scheduler runs. Moving to Flask might be a solution to this issue.
+
+## Contributing
+Contributions are welcome! Please fork this repository and submit a pull request with your changes.
+
+## Contact
+For any questions or comments, please open an issue on GitHub or contact me directly at magiraldo2224@gmail.com
 
 ## Application interface
 ![Aplication Screenshot](screenshots/app_interface.png)
