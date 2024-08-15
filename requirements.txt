@@ -1,10 +1,7 @@
-requests_oauthlib
-streamlit
+requests_oauthlib==1.2.0
 python-dotenv
 google-generativeai
 APScheduler
-tweepy==4.14.0
-pandas
 google-auth
 google-auth-oauthlib
 gspread

@@ -11,6 +11,8 @@ import gspread
 from google.oauth2 import service_account
 import json
 
+load_dotenv()
+
 #Google sheets authentication
 try:
     google_json = os.getenv('GOOGLE_JSON')
@@ -59,6 +61,7 @@ except ValueError:
 resource_owner_key = fetch_response.get("oauth_token")
 resource_owner_secret = fetch_response.get("oauth_token_secret")
 print("Got OAuth token: %s" % resource_owner_key)
+print("Got OAuth token secret: %s" % resource_owner_secret)
 
 # Get authorization
 base_authorization_url = "https://api.twitter.com/oauth/authorize"
@@ -144,20 +147,28 @@ def create_and_publish_tweet(theme, emotion, max_retries=5):
             print("Tweet created")
             if len(tweet) > 280:
                 log_to_sheet(long_tweets_sheet, tweet)
-                print("Tweet to long, generating a new one")
+                print(tweet, ", Tweet to long, generating a new one")
                 time.sleep(30)
                 continue  # Retry if the tweet is too long
-            oauth = OAuth1Session(
-                consumer_key,
-                client_secret=consumer_secret,
-                resource_owner_key=access_token,
-                resource_owner_secret=access_token_secret
-            )
-            response = oauth.post(
-                "https://api.twitter.com/2/tweets",
-                json={"text":tweet},
-            )
-            print("Response code: {}".format(response.status_code))
+            else:
+                oauth = OAuth1Session(
+                    consumer_key,
+                    client_secret=consumer_secret,
+                    resource_owner_key=access_token,
+                    resource_owner_secret=access_token_secret
+                )
+                response = oauth.post(
+                    "https://api.twitter.com/2/tweets",
+                    json={"text":tweet},
+                )
+                if response.status_code == 201:
+                    log_to_sheet(posted_sheet, tweet)
+                    print("Response code: {}".format(response.status_code))
+                    print("Tweet posted: ", tweet)
+                    break
+                else:
+                    log_to_sheet(error_sheet, response.status_code)
+                    attempts += 1
         except Exception as e:
             attempts += 1
             error_message = f"{type(e).__name__} - {e}"
@@ -182,10 +193,9 @@ def run_periodically():
     """
     Creates and post a tweet
     """
-    while True:
-        theme, emotion = theme_selection()
-        create_and_publish_tweet(theme, emotion)
-        print("Schedule complete: Tweet posted")
+    theme, emotion = theme_selection()
+    create_and_publish_tweet(theme, emotion)
+    print("Schedule complete: Tweet posted")
 
 def tweet_schedule():
     # Start a thread to run the periodic function
