@@ -1,104 +1,108 @@
-# Twitter Bot Control Page
+# Twitter Automation Bot
 
-## Overview
-This project is a Twitter bot that generates and posts tweets using the Gemini API. The bot also logs tweets, errors, and tweets that exceed the character limit in a Google Sheets file. The user interface is built with Streamlit, though the project is considering moving to Flask due to UI update issues with the scheduler.
+This project is a Python-based bot that automates the creation and posting of tweets on Twitter. The bot uses Google Sheets to log posted tweets, errors, and long tweets that exceed Twitter's character limit. The tweets are generated using Google's Gemini 1.5 Pro language model, and OAuth1.0 is used for authentication with Twitter.
 
-## Features
-- **Automated Tweet Generation**: Tweets are created using the Gemini API based on randomly selected themes and emotions.
-- **Tweet Posting**: Generated tweets are posted on Twitter using the Tweepy API.
-- **Error Handling**: Tweets that exceed 280 characters and errors are logged in a Google Sheets file.
-- **User Interface**: Built with Streamlit, displays logs, scheduled tweets, and error information. (Read the limitations section about this feaure)
-- **Periodic Updates**: A scheduler periodically generates and posts tweets, and updates the UI.
+## Table of Contents
+
+- [Installation](#installation)
+- [Environment Variables](#environment-variables)
+- [Usage](#usage)
+- [Functions](#functions)
+- [Error Handling](#error-handling)
+- [Scheduler](#scheduler)
+- [Contributing](#contributing)
 
 ## Installation
 
-### Prerequisites
-- Python 3.7+
-- Streamlit
-- Tweepy
-- Google API Client Library
-- APScheduler
-- Pandas
-- dotenv
+1. Clone the repository to your local machine:
 
-### Environment Variables
-Create a `.env` file in the root directory and add the following environment variables:
-
-   ```sh
-    CONSUMER_KEY=your_twitter_consumer_key
-    CONSUMER_SECRET=your_twitter_consumer_secret
-    ACCESS_TOKEN=your_twitter_access_token
-    ACCESS_SECRET=your_twitter_access_secret
-    GOOGLE_JSON=your_google_service_account_json
-    GOOGLE_SHEET=your_google_sheet_url
-    GOOGLE_AI_KEY=your_google_ai_key
-   ```
-
-### Installation Steps
-
-1. Clone the repository:
-    ```sh
-    git clone https://github.com/Malegiraldo22/twitterbot.git
-    cd twitterbot
+    ```bash
+    git clone https://github.com/yourusername/twitter-automation-bot.git
+    cd twitter-automation-bot
     ```
 
-2. Install dependencies:
-    ```sh
+2. Install the required dependencies:
+
+    ```bash
     pip install -r requirements.txt
     ```
 
-3. Run the Streamlit app:
-    ```sh
-    streamlit run app.py
-    ```
+3. Set up your Google Sheets API credentials and Twitter API credentials as described in the [Environment Variables](#environment-variables) section.
 
+4. Create a `.env` file in the root directory and populate it with the required environment variables.
+
+## Environment Variables
+
+This project requires several environment variables to be set for authentication and configuration. These variables should be defined in a `.env` file in the root directory of the project.
+
+### Required Variables
+
+- **Google Sheets API:**
+    - `GOOGLE_JSON`: JSON string of the Google service account credentials.
+    - `GOOGLE_SHEET`: URL of the Google Sheet to use for logging data.
+
+- **Twitter API:**
+    - `CONSUMER_KEY`: Twitter API consumer key.
+    - `CONSUMER_SECRET`: Twitter API consumer secret.
+
+- **Google Gemini API:**
+    - `GOOGLE_AI_KEY`: API key for Google's Gemini model.
+
+Example `.env` file:
+
+```plaintext
+GOOGLE_JSON='{"type":"service_account",...}'
+GOOGLE_SHEET='https://docs.google.com/spreadsheets/d/your-sheet-id'
+CONSUMER_KEY='your-consumer-key'
+CONSUMER_SECRET='your-consumer-secret'
+GOOGLE_AI_KEY='your-google-ai-key'
+```
 ## Usage
+To start the bot, simply run the following command:
+```python
+python bot.py
+```
+The bot will authenticate with Google Sheets, Gemini and Twitter, then start generating and posting tweets at regular intervals (every hour by default)
 
-### Streamlit Interface
-- Open your web browser and go to the local address provided by Streamlit (usually `http://localhost:8501`).
-- The main page displays logs, generated tweets, long tweets, and errors.
+### Customizing Tweet Themes and Emotions
+The `theme_selection()` function randomly selects a theme and an emotion to generate tweets. You can customize the list of themes and emotions in the function.
 
-### Scheduler
-- Tweets are generated and posted every hour.
-- The UI updates every minute to reflect new data from Google Sheets.
+## Functions
+### `theme_selection()`
+Randomly selects a theme and an emotion to be used for tweet generation.
+* Returns
+    * `theme (str)`: Selected theme for the tweet
+    * `emotion (str)`: selected emotion to set the tone of the tweet
 
-### Customization
+### `log_to_sheet(sheet, message)`
+Logs a message with a timestamp to a specified Google Sheet
+* Parameters
+    * `sheet`: The Google Sheet to log data to
+    * `message (str)`: The message to log
 
-- You can customize the list of themes and emotions in the `theme_selection` function to tailor the generated tweets to your preferences or specific use case.
+### `create_and_publish_tweet(theme, emotion, max_retires=5)`
+Generates a tweet with a specified theme and emotion, then attempts to post it on twitter. If the tweet exceeds 280 characters, it is logged in a "Long Tweets" sheet, and a new tweet is generated. If an error occurs, it is logged in an "Errors" sheet, and the function retries up to `max_retries` times.
+* Parameters
+    * `theme (str): Theme selected by `theme_selection()` function
+    * `emotion (str): Emotion selected by `theme_selection()` function
+    * `max_retries (int, optional): Maximum number of retries for posting the tweet. Defaults to 5.
+* Returns
+    * `tweet (str)`: The generated tweet text, or `None` if the tweet could not be published
 
-## Code Explanation
+### `run_periodically()`
+Periodically generates and post tweets
 
-### Authentication
-- **Twitter Authentication**: Uses Tweepy to authenticate with the Twitter API.
-- **Google Sheets Authentication**: Uses `gspread` and `google-auth` to connect to Google Sheets.
+### `tweet_schedule()`
+Schedules the bot to post tweets at regular intervals (every hour by default) using the `APScheduler` library
 
-### Logging
-- Logs are displayed on the Streamlit interface (Read the limitations section to more about this) and stored in Google Sheets.
+## Error Handling
+The bot includes error handling. If an error occurs during the authentication or tweet posting process, it is logged in the "Errors" sheet with a timestamp. If the tweet exceeds X's 280 character limit, it is logged in the "Long Tweets" sheet
 
-### Functions
-- `theme_selection()`: Randomly selects a theme and emotion for tweet generation.
-- `log_to_sheet(sheet, message)`: Logs messages to a specified Google Sheet.
-- `create_and_publish_tweet(theme, emotion, max_retries=5)`: Generates and posts a tweet, handling errors and retries.
-- `check_sheet_updates()`: Fetches data from Google Sheets.
-- `run_periodically()`: Generates and posts tweets periodically.
-- `tweet_schedule()`: Schedules the `run_periodically` function to run every hour.
-- `refresh_ui()`: Refreshes the Streamlit UI to display updated data.
-- `ui_schedule()`: Schedules the `refresh_ui` function to run every minute.
-
-## Limitations
-
-- The quality and coherence of the generated tweets may vary based on the complexity of the selected theme and the capabilities of the language model used.
-- The Twitter API has rate limits and other restrictions that may affect the frequency and volume of tweets that can be published.
-- Currently, the UI does not update properly when the scheduler runs. Moving to Flask might be a solution to this issue.
+## Scheduler
+The bot uses the `APScheduler` library to schedule the tweet posting function (`run_periodically()`) at regular intervals. The schedule can be customized by modifying the `tweet_schedule()` function.
 
 ## Contributing
-Contributions are welcome! Please fork this repository and submit a pull request with your changes.
-
-## Contact
-For any questions or comments, please open an issue on GitHub or contact me directly at magiraldo2224@gmail.com
-
-## Application interface
-![Aplication Screenshot](screenshots/app_interface.png)
+Contributions are welcome! Please fork the repository and submit a pull request with your changes.
 
 ## Example of generated tweets
 ![Example tweet](screenshots/Example1.png)
