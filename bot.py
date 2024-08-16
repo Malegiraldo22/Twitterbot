@@ -61,7 +61,6 @@ except ValueError:
 resource_owner_key = fetch_response.get("oauth_token")
 resource_owner_secret = fetch_response.get("oauth_token_secret")
 print("Got OAuth token: %s" % resource_owner_key)
-print("Got OAuth token secret: %s" % resource_owner_secret)
 
 # Get authorization
 base_authorization_url = "https://api.twitter.com/oauth/authorize"
