@@ -141,7 +141,7 @@ def create_and_publish_tweet(theme, emotion, max_retries=5):
     attempts = 0
     while attempts < max_retries:
         try:
-            response = model.generate_content(f'Write a 280 character tweet about {theme} with a {emotion} tone including 4 hashtags')
+            response = model.generate_content(f"""Write a 280 character tweet about {theme} with a {emotion} tone including 4 hashtags. Avoid generating tweets that contains empty spaces to be filled by the user in [], like for example 'Whoa! 🤯 Did [Celebrity/Show/Movie] just do that?!  I can't believe it!  This is why I love pop culture! #Shook #MindBlown #EntertainmentNews #PopCulture' """)
             tweet = response.text
             print("Tweet created")
             if len(tweet) > 280:
