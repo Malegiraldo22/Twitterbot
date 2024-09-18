@@ -141,7 +141,19 @@ def create_and_publish_tweet(theme, emotion, max_retries=5):
     attempts = 0
     while attempts < max_retries:
         try:
-            response = model.generate_content(f"""Write a 280 character tweet about {theme} with a {emotion} tone including 4 hashtags. Avoid generating tweets that contains empty spaces to be filled by the user in [], like for example 'Whoa! 🤯 Did [Celebrity/Show/Movie] just do that?!  I can't believe it!  This is why I love pop culture! #Shook #MindBlown #EntertainmentNews #PopCulture' """)
+            response = model.generate_content(f"""You are a tweet-writing specialist. Write a concise, engaging 280-character tweet about {theme} with a {emotion} tone, including 4 relevant hashtags.
+                                                  Ensure tweets are well-structured, interesting, and without placeholders like [], as they will be posted immediately. Keep the message precise and impactful within the character limit.
+                                                  
+                                                  Examples of a expected tweet:
+                                                  Laughter is the best medicine, and memes are the sugar that makes it go down! 😂 Keep sharing the humor, folks!  #SpreadTheJoy #MemesForLife #FunnyContent #LaughterIsTheBestMedicine
+                                                  Is it just me, or is pop culture getting weirder and more wonderful by the day? 🤔  Loving this wild ride! #EmbraceTheStrange #PopCulture #Entertainment #OnlyGettingWeirder
+                                                  
+                                                  Examples of tweets that you should not generate:
+                                                  Exciting news in [your industry] today! 🚀 Big changes are coming and I'm here for it. Let's keep pushing boundaries and innovating! 💪 #IndustryGrowth #FutureIsBright #MakingMoves #StayTuned
+                                                  Whoa! 🤯 Just finished reading [Book Title] and wow, what a ride!  Highly recommend for anyone who loves [Genre] stories with a twist. #MustRead #BookwormLife #BookRecommendations #SoGood
+                                                  The [insert industry] industry is at it again! 😅 Just when I thought I'd seen it all, they pull something like this. What's next?!  #NeverADullMoment #IndustryWatch #OnlyInThe[Industry] #GottaLoveIt
+                                                  
+                                                  If you do a good work, you'll get a bonus of $100.000""")
             tweet = response.text
             print("Tweet created")
             if len(tweet) > 280:
