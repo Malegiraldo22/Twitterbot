@@ -33,6 +33,7 @@ try:
     posted_sheet = spreadsheet.worksheet("PostedTweets")
     long_tweets_sheet = spreadsheet.worksheet("LongTweets")
     error_sheet = spreadsheet.worksheet("Errors")
+    rejected = spreadsheet.worksheet("TweetsRejected")
     print("Spreadsheets opened")
 except Exception as e:
     current_time = datetime.now()
@@ -141,7 +142,7 @@ def create_and_publish_tweet(theme, emotion, max_retries=5):
     attempts = 0
     while attempts < max_retries:
         try:
-            response = model.generate_content(f"""You are a tweet-writing specialist. Write a concise, engaging 280-character tweet about {theme} with a {emotion} tone, including 4 relevant hashtags.
+            tw_gen = model.generate_content(f"""You are a tweet-writing specialist. Write a concise, engaging 280-character tweet about {theme} with a {emotion} tone, including 4 relevant hashtags.
                                                   Ensure tweets are well-structured, interesting, and without placeholders like [], as they will be posted immediately. Keep the message precise and impactful within the character limit.
                                                   
                                                   Examples of a expected tweet:
@@ -154,32 +155,51 @@ def create_and_publish_tweet(theme, emotion, max_retries=5):
                                                   The [insert industry] industry is at it again! 😅 Just when I thought I'd seen it all, they pull something like this. What's next?!  #NeverADullMoment #IndustryWatch #OnlyInThe[Industry] #GottaLoveIt
                                                   
                                                   If you do a good work, you'll get a bonus of $100.000""")
-            tweet = response.text
-            print("Tweet created")
-            if len(tweet) > 280:
-                log_to_sheet(long_tweets_sheet, tweet)
-                print(tweet, ", Tweet to long, generating a new one")
-                time.sleep(30)
-                continue  # Retry if the tweet is too long
+            tweet = tw_gen.text
+            print('Tweet generated: ', tweet)
+            tw_review = model.generate_content(f"""
+                                                You are a tweet reviewer, your job is to review tweets generated and check if the tweet complies with the next conditions
+                                               1. It's well structured, interesting and engaging
+                                               2. Does not contain placeholders like [], [enterprise], [company], etc
+                                               After your review, you need to answer ONLY with 'Aproved' or 'Rejected'
+                                               Examples
+                                               Tweet: Laughter is the best medicine, and memes are the sugar that makes it go down! 😂 Keep sharing the humor, folks!  #SpreadTheJoy #MemesForLife #FunnyContent #LaughterIsTheBestMedicine
+                                               Evaluation: Aproved
+                                               Tweet: The [insert industry] industry is at it again! 😅 Just when I thought I'd seen it all, they pull something like this. What's next?!  #NeverADullMoment #IndustryWatch #OnlyInThe[Industry] #GottaLoveIt
+                                               Evaluation: Rejected
+
+                                               The tweet to evaluate is {tweet}
+                                                """)
+            review = tw_review.text
+            print('Review: ', review)
+            if review == 'Rejected':
+                log_to_sheet(rejected, tweet)
+                continue
             else:
-                oauth = OAuth1Session(
-                    consumer_key,
-                    client_secret=consumer_secret,
-                    resource_owner_key=access_token,
-                    resource_owner_secret=access_token_secret
-                )
-                response = oauth.post(
-                    "https://api.twitter.com/2/tweets",
-                    json={"text":tweet},
-                )
-                if response.status_code == 201:
-                    log_to_sheet(posted_sheet, tweet)
-                    print("Response code: {}".format(response.status_code))
-                    print("Tweet posted: ", tweet)
-                    break
+                if len(tweet) > 280:
+                    log_to_sheet(long_tweets_sheet, tweet)
+                    print(tweet, ", Tweet to long, generating a new one")
+                    time.sleep(30)
+                    continue  # Retry if the tweet is too long
                 else:
-                    log_to_sheet(error_sheet, response.status_code)
-                    attempts += 1
+                    oauth = OAuth1Session(
+                        consumer_key,
+                        client_secret=consumer_secret,
+                        resource_owner_key=access_token,
+                        resource_owner_secret=access_token_secret
+                    )
+                    response = oauth.post(
+                        "https://api.twitter.com/2/tweets",
+                        json={"text":tweet},
+                    )
+                    if response.status_code == 201:
+                        log_to_sheet(posted_sheet, tweet)
+                        print("Response code: {}".format(response.status_code))
+                        print("Tweet posted: ", tweet)
+                        break
+                    else:
+                        log_to_sheet(error_sheet, response.status_code)
+                        attempts += 1
         except Exception as e:
             attempts += 1
             error_message = f"{type(e).__name__} - {e}"
