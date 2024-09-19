@@ -44,6 +44,10 @@ except Exception as e:
 genai.configure(api_key=os.getenv('GOOGLE_AI_KEY'))
 model = genai.GenerativeModel('gemini-1.5-pro')
 
+#Gemini Authentication Evaluator
+genai.configure(api_key=os.getenv('GOOGLE_AI_KEY_EVA'))
+evaluator = genai.GenerativeModel('gemini-1.5-pro')
+
 #X Authentication
 consumer_key = os.environ.get("CONSUMER_KEY")
 consumer_secret = os.environ.get("CONSUMER_SECRET")
@@ -157,7 +161,7 @@ def create_and_publish_tweet(theme, emotion, max_retries=5):
                                                   If you do a good work, you'll get a bonus of $100.000""")
             tweet = tw_gen.text
             print('Tweet generated: ', tweet)
-            tw_review = model.generate_content(f"""
+            tw_review = evaluator.generate_content(f"""
                                                 You are a tweet reviewer, your job is to review tweets generated and check if the tweet complies with the next conditions
                                                1. It's well structured, interesting and engaging
                                                2. Does not contain placeholders like [], [enterprise], [company], etc
