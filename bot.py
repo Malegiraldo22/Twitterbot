@@ -176,34 +176,37 @@ def create_and_publish_tweet(theme, emotion, max_retries=5):
                                                 """)
             review = tw_review.text
             print('Review: ', review)
-            if review == 'Rejected':
+            if review.strip().lower() == "rejected":
+                print('Tweet rejected, generating a new one')
                 log_to_sheet(rejected, tweet)
-                continue
+                attempts += 1
+                time.sleep(30)
+                continue            
+
+            if len(tweet) > 280:
+                log_to_sheet(long_tweets_sheet, tweet)
+                print(tweet, ", Tweet to long, generating a new one")
+                time.sleep(30)
+                continue  # Retry if the tweet is too long
             else:
-                if len(tweet) > 280:
-                    log_to_sheet(long_tweets_sheet, tweet)
-                    print(tweet, ", Tweet to long, generating a new one")
-                    time.sleep(30)
-                    continue  # Retry if the tweet is too long
+                oauth = OAuth1Session(
+                    consumer_key,
+                    client_secret=consumer_secret,
+                    resource_owner_key=access_token,
+                    resource_owner_secret=access_token_secret
+                )
+                response = oauth.post(
+                    "https://api.twitter.com/2/tweets",
+                    json={"text":tweet},
+                )
+                if response.status_code == 201:
+                    log_to_sheet(posted_sheet, tweet)
+                    print("Response code: {}".format(response.status_code))
+                    print("Tweet posted: ", tweet)
+                    break
                 else:
-                    oauth = OAuth1Session(
-                        consumer_key,
-                        client_secret=consumer_secret,
-                        resource_owner_key=access_token,
-                        resource_owner_secret=access_token_secret
-                    )
-                    response = oauth.post(
-                        "https://api.twitter.com/2/tweets",
-                        json={"text":tweet},
-                    )
-                    if response.status_code == 201:
-                        log_to_sheet(posted_sheet, tweet)
-                        print("Response code: {}".format(response.status_code))
-                        print("Tweet posted: ", tweet)
-                        break
-                    else:
-                        log_to_sheet(error_sheet, response.status_code)
-                        attempts += 1
+                    log_to_sheet(error_sheet, response.status_code)
+                    attempts += 1
         except Exception as e:
             attempts += 1
             error_message = f"{type(e).__name__} - {e}"
