@@ -11,14 +11,15 @@ This project is a Python-based bot that automates the creation and posting of tw
 - [Error Handling](#error-handling)
 - [Scheduler](#scheduler)
 - [Contributing](#contributing)
+- [License](#License)
 
 ## Installation
 
 1. Clone the repository to your local machine:
 
     ```bash
-    git clone https://github.com/yourusername/twitter-automation-bot.git
-    cd twitter-automation-bot
+    git clone https://github.com/Malegiraldo22/Twitterbot.git
+    cd Twitterbot
     ```
 
 2. Install the required dependencies:
@@ -72,7 +73,7 @@ The `theme_selection()` function randomly selects a theme and an emotion to gene
 Randomly selects a theme and an emotion to be used for tweet generation.
 * Returns
     * `theme (str)`: Selected theme for the tweet
-    * `emotion (str)`: selected emotion to set the tone of the tweet
+    * `voice (str)`: selected voice to set the tone of the tweet
 
 ### `log_to_sheet(sheet, message)`
 Logs a message with a timestamp to a specified Google Sheet
@@ -84,7 +85,7 @@ Logs a message with a timestamp to a specified Google Sheet
 Generates a tweet with a specified theme and emotion, then attempts to post it on twitter. If the tweet exceeds 280 characters, it is logged in a "Long Tweets" sheet, and a new tweet is generated. If an error occurs, it is logged in an "Errors" sheet, and the function retries up to `max_retries` times.
 * Parameters
     * `theme (str): Theme selected by `theme_selection()` function
-    * `emotion (str): Emotion selected by `theme_selection()` function
+    * `voice (str): Voice selected by `theme_selection()` function
     * `max_retries (int, optional): Maximum number of retries for posting the tweet. Defaults to 5.
 * Returns
     * `tweet (str)`: The generated tweet text, or `None` if the tweet could not be published
@@ -109,3 +110,7 @@ Contributions are welcome! Please fork the repository and submit a pull request 
 ![Example tweet](screenshots/Example2.png)
 ![Example tweet](screenshots/Example3.png)
 ![Example tweet](screenshots/Example4.png)
+
+## License
+
+This project is licensed under the MIT License. See `LICENSE` for more information.
