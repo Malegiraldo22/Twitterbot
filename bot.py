@@ -10,6 +10,7 @@ from apscheduler.schedulers.blocking import BlockingScheduler
 import gspread
 from google.oauth2 import service_account
 import json
+from textwrap import dedent
 
 load_dotenv()
 
@@ -90,32 +91,42 @@ access_token_secret = oauth_tokens["oauth_token_secret"]
 # Theme selection function
 def theme_selection():
     """
-    Function that randomly selects a theme and a emotion to be used to generate a tweet
+    Function that randomly selects a theme and a voice to be used to generate a tweet
 
     Returns:
         - Theme (str): A theme selected as the main topic of a tweet
-        - Emotion (str): The emotion to set the tone of the tweet
+        - Voice (str): The voice used to set the tone of the tweet
     """
     topics = [
-        "Technology and Innovation", "Productivity Tips", "Health and Wellness", "Personal Finance",
-        "Personal Development", "Entrepreneurship", "Industry News", "Pop Culture and Entertainment",
-        "Travel and Adventures", "Cooking and Recipes", "Sports and Fitness", "Inspirational Quotes",
-        "Memes and Humorous Content", "Ecology and Sustainability", "Education and Learning",
-        "Books and Reading Recommendations", "Science and Discoveries", "Photography and Art",
-        "Opinions and Debates", "Technology in Everyday Life", "Digital Marketing and Social Media",
-        "Personal Stories and Anecdotes", "Psychology and Mental Health", "Fashion and Style",
-        "Global News and Events", "Technical Skills Development (coding, design, etc.)",
-        "DIY Projects and Crafts", "Gaming and E-sports", "Music and Music Recommendations", "Product Reviews",
-        "Make fun of Elon Musk", "Make fun of Donald Trump"
+    "Cutting-Edge Tech", "AI & Machine Learning", "Space Exploration", "The Future of Work",
+    "Cybersecurity & Privacy", "Sustainable Tech", "Gadget Reviews & First Impressions",
+    "Web3 & Decentralization", "Biotechnology & Genetic Engineering", "Mindfulness & Meditation",
+    "Healthy Eating Habits", "Financial Freedom & Investing", "Habit Building & Goal Setting",
+    "Productivity Hacks for Busy Professionals", "Creative Hobbies & DIY", "Travel Bucket List & Local Gems",
+    "Book Club & Literary Discussions", "Home Decor & Interior Design", "Parenting tips",
+    "Relationship Advice", "Pop Culture Deep Dives", "Trending Memes & Internet Culture",
+    "Indie Music & Hidden Gems", "Film & TV Analysis", "Gaming News & Reviews",
+    "Art & Photography Showcases", "Fashion Trends and Sustainable Fashion",
+    "Climate Change Action & Awareness", "Social Justice & Equity", "Educational Reform & Accessibility",
+    "Global Politics & Geopolitics", "Civic Engagement & Community Building", "Weird News of the Day",
+    "Sarcastic Takes on Life", "Relatable Everyday Struggles", "Conspiracy Theories & Speculations",
+    '"Roast" of Elon Musk', '"Roast" of Donald Trump', '"Roast" of Vladimir Putin', "Coding Challenges and Tips",
+    "Design Software Tutorials", "Data Science insights"
     ]
 
-    emotions = [
-        "happy", "sad", "excited", "angry", "surprised", "curious", "inspired", "nostalgic", "motivated", "amused"
+    voices = [
+    "The Sarcastic Cynic", "The Optimistic Enthusiast", "The Curious Observer", "The Skeptical Researcher",
+    "The Passionate Advocate", "The Relatable Friend", "The Techie Guru", "The Creative Innovator",
+    "The World Traveler", "The Foodie Expert", "The Empathetic Listener", "The Nostalgic Storyteller",
+    "The Ambitious Hustler", "The Laid-back Observer", "A Software Developer", "A Marketing Strategist",
+    "A Financial Advisor", "A Personal Trainer", "A Teacher/Educator", "A Journalist/Reporter",
+    "A Data Scientist", "A Designer", "The Conspiracy Theorist (lighthearted)", "The Internet Meme Expert",
+    'The "Karen" (Satirically)', "The Confused Millennial/Gen Z"
     ]
 
     theme = random.choice(topics)
-    emotion = random.choice(emotions)
-    return theme, emotion
+    voice = random.choice(voices)
+    return theme, voice
 
 def log_to_sheet(sheet, message):
     """
@@ -129,15 +140,15 @@ def log_to_sheet(sheet, message):
     formatted_time = current_time.strftime("%d-%m-%Y %H:%M:%S")
     sheet.append_row([formatted_time, message])
 
-def create_and_publish_tweet(theme, emotion, max_retries=5):
+def create_and_publish_tweet(theme, voice, max_retries=5):
     """
-    Generates a tweet with a theme and emotion, using Gemini 1.0 Pro. Checks if the tweet generated is over 280 characters lenght, if it is stores that tweet into a Google sheet as a way of control and retries.
+    Generates a tweet with a theme and voice, using Gemini Pro. Checks if the tweet generated is over 280 characters lenght, if it is stores that tweet into a Google sheet as a way of control and retries.
     If the tweet is created correctly, it gets published on twitter and stored in a google sheet as a control log.
     If there's an error, stores the error in a google sheet as a control log, then tries again for at least 5 times. If after 5 tries it's impossible to publish a tweet, waits 10 minutes to try again
 
     Args:
         theme (str): Theme selected by theme_selection function
-        emotion (str): Emotion selected by theme_selection function
+        voice (str): Voice selected by theme_selection function
         max_retries (int, optional): Max number of retries. Defaults to 5.
 
     Returns:
@@ -146,34 +157,46 @@ def create_and_publish_tweet(theme, emotion, max_retries=5):
     attempts = 0
     while attempts < max_retries:
         try:
-            tw_gen = model.generate_content(f"""You are a tweet-writing specialist. Write a concise, engaging 280-character tweet about {theme} with a {emotion} tone, including 4 relevant hashtags.
-                                                  Ensure tweets are well-structured, interesting, and without placeholders like [], as they will be posted immediately. Keep the message precise and impactful within the character limit.
+            tw_gen = model.generate_content(dedent(f"""\
+            You are a social media expert crafting engaging and authentic tweets for a diverse audience. Your goal is to write tweets that resonate with real people, not sound like a bot. You will receive a {theme} and a desired {voice}.
+
+            Your task is to generate a single tweet that incorporates the {theme} in the designated {voice}, and uses conversational and natural language. Think about how a normal person would tweet about it. Feel free to use a personal anecdote, rhetorical questions, or relevant comments to boost the engagement. The generated tweet must be in 280 characters max. Include 2 to 4 relevant hashtags that naturally arise from the tweet’s content and context.
+
+            **Theme**: {theme}
+            **Voice**: {voice}
                                                   
-                                                  Examples of a expected tweet:
-                                                  Laughter is the best medicine, and memes are the sugar that makes it go down! 😂 Keep sharing the humor, folks!  #SpreadTheJoy #MemesForLife #FunnyContent #LaughterIsTheBestMedicine
-                                                  Is it just me, or is pop culture getting weirder and more wonderful by the day? 🤔  Loving this wild ride! #EmbraceTheStrange #PopCulture #Entertainment #OnlyGettingWeirder
-                                                  
-                                                  Examples of tweets that you should not generate:
-                                                  Exciting news in [your industry] today! 🚀 Big changes are coming and I'm here for it. Let's keep pushing boundaries and innovating! 💪 #IndustryGrowth #FutureIsBright #MakingMoves #StayTuned
-                                                  Whoa! 🤯 Just finished reading [Book Title] and wow, what a ride!  Highly recommend for anyone who loves [Genre] stories with a twist. #MustRead #BookwormLife #BookRecommendations #SoGood
-                                                  The [insert industry] industry is at it again! 😅 Just when I thought I'd seen it all, they pull something like this. What's next?!  #NeverADullMoment #IndustryWatch #OnlyInThe[Industry] #GottaLoveIt
-                                                  
-                                                  If you do a good work, you'll get a bonus of $100.000""")
+            If you do a good work, you'll get a bonus of $100.000"""))
             tweet = tw_gen.text
             print('Tweet generated: ', tweet)
-            tw_review = evaluator.generate_content(f"""
-                                                You are a tweet reviewer, your job is to review tweets generated and check if the tweet complies with the next conditions
-                                               1. It's well structured, interesting and engaging
-                                               2. Does not contain placeholders like [], [enterprise], [company], etc
-                                               After your review, you need to answer ONLY with 'Aproved' or 'Rejected'
-                                               Examples
-                                               Tweet: Laughter is the best medicine, and memes are the sugar that makes it go down! 😂 Keep sharing the humor, folks!  #SpreadTheJoy #MemesForLife #FunnyContent #LaughterIsTheBestMedicine
-                                               Evaluation: Aproved
-                                               Tweet: The [insert industry] industry is at it again! 😅 Just when I thought I'd seen it all, they pull something like this. What's next?!  #NeverADullMoment #IndustryWatch #OnlyInThe[Industry] #GottaLoveIt
-                                               Evaluation: Rejected
+            tw_review = evaluator.generate_content(dedent(f"""\
+            You are a tweet reviewer. Your job is to evaluate tweets and determine if they are suitable for posting. Consider the following criteria:
 
-                                               The tweet to evaluate is {tweet}
-                                                """)
+            1.  **Engagement and Structure:** Is the tweet well-structured, interesting, and likely to engage a real audience? Does it sound like a tweet a real person would post? Does it use natural and conversational language, not overly formal or robotic?
+            2.  **Authenticity:** Does the tweet sound authentic and human-like, or does it sound generated? Does the voice seem consistent with the assigned persona?
+            3. **Content:** Does the tweet effectively address the provided theme?
+            4.  **No Placeholders:** Does the tweet contain any placeholders such as [], [enterprise], [company], etc.?
+            After your review, answer ONLY with 'Approved' or 'Rejected'.
+
+            Examples:
+            Tweet: Laughter is the best medicine, and memes are the sugar that makes it go down! 😂 Keep sharing the humor, folks!  #SpreadTheJoy #MemesForLife #FunnyContent #LaughterIsTheBestMedicine
+            Evaluation: Approved
+
+            Tweet: The [insert industry] industry is at it again! 😅 Just when I thought I'd seen it all, they pull something like this. What's next?!  #NeverADullMoment #IndustryWatch #OnlyInThe[Industry] #GottaLoveIt
+            Evaluation: Rejected
+
+            Tweet: Just finished reading a fantastic book about the future of AI! 🤔 It's mind-blowing stuff! Who else is fascinated by this topic? #AI #FutureTech #BookRecommendations
+            Evaluation: Approved
+
+            Tweet:  As a techie guru, I gotta say, those new headphones are a game changer! 🎧 I was so focused listening to music, I barely noticed I was at work, ahahah! #TechGuru #MusicLover #NewHeadphones #ProductReview
+            Evaluation: Approved
+
+            Tweet: Just another day, another [product name] doing [function] 🙄 #Boring #DailyLife #Meh
+            Evaluation: Rejected
+
+            Tweet: OMG, this new [insert tech] is insane! 🤯 It's like we're living in the future. #Tech #Future #Innovation #Whoa
+            Evaluation: Rejected
+
+            The tweet to evaluate is: {tweet}"""))
             review = tw_review.text
             print('Review: ', review)
             if review.strip().lower() == "rejected":
