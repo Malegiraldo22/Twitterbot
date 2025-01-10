@@ -5,3 +5,4 @@ APScheduler
 google-auth
 google-auth-oauthlib
 gspread
+duckduckgo_search

@@ -11,6 +11,7 @@ import gspread
 from google.oauth2 import service_account
 import json
 from textwrap import dedent
+from duckduckgo_search import DDGS
 
 load_dotenv()
 
@@ -128,6 +129,35 @@ def theme_selection():
     voice = random.choice(voices)
     return theme, voice
 
+def internet_search(theme):
+    """Function that uses DuckDuckGo to search for the most recent news about a topic
+
+    Args:
+        theme (str): theme selected by the theme_selection function
+
+    Returns:
+        list: List that contains the most recent news
+    """
+
+    query = theme
+
+    if theme == '"Roast" of Elon Musk':
+        query = 'Elon Musk'
+    elif theme == '"Roast" of Donald Trump':
+        query = 'Donald Trump'
+    elif theme == '"Roast" of Vladimir Putin':
+        query == 'Vladimir Putin'
+    
+    results = DDGS().news(
+        keywords=query,
+        region="wt-wt",
+        safesearch="off",
+        timelimit="d",
+        max_results=1
+    )
+
+    return results
+
 def log_to_sheet(sheet, message):
     """
     Appends a row of data into the google sheet passed with a timestamp
@@ -140,15 +170,16 @@ def log_to_sheet(sheet, message):
     formatted_time = current_time.strftime("%d-%m-%Y %H:%M:%S")
     sheet.append_row([formatted_time, message])
 
-def create_and_publish_tweet(theme, voice, max_retries=5):
+def create_and_publish_tweet(theme, voice, news, max_retries=5):
     """
-    Generates a tweet with a theme and voice, using Gemini Pro. Checks if the tweet generated is over 280 characters lenght, if it is stores that tweet into a Google sheet as a way of control and retries.
+    Generates a tweet with a theme and voice and a news related with the theme, using Gemini Pro. Checks if the tweet generated is over 280 characters lenght, if it is stores that tweet into a Google sheet as a way of control and retries.
     If the tweet is created correctly, it gets published on twitter and stored in a google sheet as a control log.
     If there's an error, stores the error in a google sheet as a control log, then tries again for at least 5 times. If after 5 tries it's impossible to publish a tweet, waits 10 minutes to try again
 
     Args:
         theme (str): Theme selected by theme_selection function
         voice (str): Voice selected by theme_selection function
+        news (list): List that contains the news found by the search tool
         max_retries (int, optional): Max number of retries. Defaults to 5.
 
     Returns:
@@ -158,14 +189,17 @@ def create_and_publish_tweet(theme, voice, max_retries=5):
     while attempts < max_retries:
         try:
             tw_gen = model.generate_content(dedent(f"""\
-            You are a social media expert crafting engaging and authentic tweets for a diverse audience. Your goal is to write tweets that resonate with real people, not sound like a bot. You will receive a {theme} and a desired {voice}.
+            You're a social media expert crafting authentic tweets. Your goal is to write a tweet that sounds like it's from a real person, not a bot. You'll receive a {theme} and a specific {voice} description, and **a single recent news item ({news}) related to the theme.**
 
-            Your task is to generate a single tweet that incorporates the {theme} in the designated {voice}, and uses conversational and natural language. Think about how a normal person would tweet about it. Feel free to use a personal anecdote, rhetorical questions, or relevant comments to boost the engagement. The generated tweet must be in 280 characters max. Include 2 to 4 relevant hashtags that naturally arise from the tweet’s content and context.
+            Your task is to write a SINGLE tweet (max 280 characters – this is crucial!). Incorporate the {theme} using the specified {voice}.  Use the provided news item as a starting point and inspiration.  Think about how someone with this voice would tweet about the topic, considering both the news and the broader context of the theme.
 
-            **Theme**: {theme}
-            **Voice**: {voice}
-                                                  
-            If you do a good work, you'll get a bonus of $100.000"""))
+            Write in a conversational and natural style.  Feel free to use personal anecdotes, rhetorical questions, or comments to make the tweet more engaging. You can interpret the news creatively – it doesn't have to be a direct retelling.
+
+            Include 2-4 relevant hashtags. Consider hashtags related to the theme, key people mentioned, or trending topics. Be creative but concise! Use abbreviations, emojis (sparingly), or playful language to stay within the 280-character limit.
+
+            Theme: {theme}
+            Voice: {voice} (e.g., "The Sarcastic Cynic - Imagine a sarcastic cynic tweeting about this. They might use dry humor, rhetorical questions, or ironic observations.")
+            News Article: {news}"""))
             tweet = tw_gen.text
             print('Tweet generated: ', tweet)
             tw_review = evaluator.generate_content(dedent(f"""\
@@ -255,7 +289,8 @@ def run_periodically():
     Creates and post a tweet
     """
     theme, emotion = theme_selection()
-    create_and_publish_tweet(theme, emotion)
+    news = internet_search(theme)
+    create_and_publish_tweet(theme, emotion, news)
     print("Schedule complete: Tweet posted")
 
 def tweet_schedule():

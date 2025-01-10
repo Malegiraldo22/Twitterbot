@@ -75,6 +75,11 @@ Randomly selects a theme and an emotion to be used for tweet generation.
     * `theme (str)`: Selected theme for the tweet
     * `voice (str)`: selected voice to set the tone of the tweet
 
+###`internet_search()`
+Searches for the most recent news using DuckDuckGo
+*Returns
+    * `news (list)`: List that contains the most recent news about the theme selected
+
 ### `log_to_sheet(sheet, message)`
 Logs a message with a timestamp to a specified Google Sheet
 * Parameters
