@@ -189,11 +189,11 @@ def create_and_publish_tweet(theme, voice, news, max_retries=5):
     while attempts < max_retries:
         try:
             tw_gen = model.generate_content(dedent(f"""\
-            You're a social media expert crafting authentic tweets. Your goal is to write a tweet that sounds like it's from a real person, not a bot. You'll receive a {theme} and a specific {voice} description, and **a single recent news item ({news}) related to the theme.**
+            You're a social media expert crafting authentic tweets. Your goal is to write a tweet that sounds like it's from a real person, not a bot. You'll receive a {theme} and a specific {voice} description, and optionally, **a single recent news item ({news}) related to the theme.**
 
-            Your task is to write a SINGLE tweet (max 280 characters – this is crucial!). Incorporate the {theme} using the specified {voice}.  Use the provided news item as a starting point and inspiration.  Think about how someone with this voice would tweet about the topic, considering both the news and the broader context of the theme.
+            Your task is to write a SINGLE tweet (max 280 characters – this is crucial!). Incorporate the {theme} using the specified {voice}. **If a News Article is provided, use it as a starting point and inspiration.** Think about how someone with this voice would tweet about the topic, considering the news (if available) and the broader context of the theme. **If no News Article is provided, generate a tweet based purely on the {theme} and {voice}, as if you were making a general observation or comment.**
 
-            Write in a conversational and natural style.  Feel free to use personal anecdotes, rhetorical questions, or comments to make the tweet more engaging. You can interpret the news creatively – it doesn't have to be a direct retelling.
+            Write in a conversational and natural style. Feel free to use personal anecdotes, rhetorical questions, or comments to make the tweet more engaging. You can interpret the news creatively – it doesn't have to be a direct retelling.
 
             Include 2-4 relevant hashtags. Consider hashtags related to the theme, key people mentioned, or trending topics. Be creative but concise! Use abbreviations, emojis (sparingly), or playful language to stay within the 280-character limit.
 
